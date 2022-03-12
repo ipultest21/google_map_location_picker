@@ -204,7 +204,7 @@ class MapPickerState extends State<MapPicker> {
             onMyLocationPressed: _initCurrentLocation,
           ),
           pin(),
-          locationCard(),
+          //locationCard(),
         ],
       ),
     );
