@@ -224,9 +224,9 @@ class MapPickerState extends State<MapPicker> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  true ? Expanded(child: Container()) : Flexible(
+                  Flexible(
                     flex: 20,
-                    child: FutureLoadingBuilder<Map<String, String>>(
+                    child: true ? Container() : FutureLoadingBuilder<Map<String, String>>(
                       future: getAddress(locationProvider.lastIdleLocation),
                       mutable: true,
                       loadingIndicator: Row(
