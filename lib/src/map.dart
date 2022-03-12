@@ -212,60 +212,28 @@ class MapPickerState extends State<MapPicker> {
 
   Widget locationCard() {
     return Align(
-      alignment: widget.resultCardAlignment ?? Alignment.bottomCenter,
+      alignment: widget.resultCardAlignment ?? Alignment.bottomRight,
       child: Padding(
         padding: widget.resultCardPadding ?? EdgeInsets.all(16.0),
-        child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Consumer<LocationProvider>(
-              builder: (context, locationProvider, _) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Flexible(
-                    flex: 20,
-                    child: true ? Container() : FutureLoadingBuilder<Map<String, String>>(
-                      future: getAddress(locationProvider.lastIdleLocation),
-                      mutable: true,
-                      loadingIndicator: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          CircularProgressIndicator(),
-                        ],
-                      ),
-                      builder: (context, data) {
-                        _address = data["address"];
-                        _placeId = data["placeId"];
-                        return Text(
-                          _address ??
-                              S.of(context)?.unnamedPlace ??
-                              'Unnamed place',
-                          style: TextStyle(fontSize: 18),
-                        );
-                      },
-                    ),
-                  ),
-                  Spacer(),
-                  FloatingActionButton(
-                    onPressed: () {
-                      Navigator.of(context).pop({
-                        'location': LocationResult(
-                          latLng: locationProvider.lastIdleLocation,
-                          address: _address,
-                          placeId: _placeId,
-                        )
-                      });
-                    },
-                    child: widget.resultCardConfirmIcon ??
-                        Icon(Icons.arrow_forward),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ),
+        child: Consumer<LocationProvider>(
+            builder: (context, locationProvider, _) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: FloatingActionButton(
+                  onPressed: () {
+                    Navigator.of(context).pop({
+                      'location': LocationResult(
+                        latLng: locationProvider.lastIdleLocation,
+                        address: _address,
+                        placeId: _placeId,
+                      )
+                    });
+                  },
+                  child: widget.resultCardConfirmIcon ??
+                      Icon(Icons.arrow_forward),
+                ),
+              );
+            }),
       ),
     );
   }
