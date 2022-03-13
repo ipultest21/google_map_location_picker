@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:geocoder/geocoder.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_map_location_picker/generated/l10n.dart';
 import 'package:google_map_location_picker/src/providers/location_provider.dart';
@@ -204,7 +205,7 @@ class MapPickerState extends State<MapPicker> {
             onMyLocationPressed: _initCurrentLocation,
           ),
           pin(),
-          //locationCard(),
+          locationCard(),
         ],
       ),
     );
@@ -212,51 +213,84 @@ class MapPickerState extends State<MapPicker> {
 
   Widget locationCard() {
     return Align(
-      alignment: widget.resultCardAlignment ?? Alignment.bottomRight,
+      alignment: widget.resultCardAlignment ?? Alignment.bottomCenter,
       child: Padding(
         padding: widget.resultCardPadding ?? EdgeInsets.all(16.0),
-        child: Consumer<LocationProvider>(
-            builder: (context, locationProvider, _) {
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton(
-                  onPressed: () {
-                    Navigator.of(context).pop({
-                      'location': LocationResult(
-                        latLng: locationProvider.lastIdleLocation,
-                        address: _address,
-                        placeId: _placeId,
-                      )
-                    });
-                  },
-                  child: widget.resultCardConfirmIcon ??
-                      Icon(Icons.arrow_forward),
-                ),
-              );
-            }),
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Consumer<LocationProvider>(
+              builder: (context, locationProvider, _) {
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Flexible(
+                        flex: 20,
+                        child: FutureLoadingBuilder<Map<String, String>>(
+                          future: getAddress(locationProvider.lastIdleLocation),
+                          mutable: true,
+                          loadingIndicator: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              CircularProgressIndicator(),
+                            ],
+                          ),
+                          builder: (context, data) {
+                            _address = data["address"];
+                            _placeId = data["placeId"];
+                            return Text(
+                              _address ??
+                                  S.of(context)?.unnamedPlace ??
+                                  'Unnamed place',
+                              style: TextStyle(fontSize: 18),
+                            );
+                          },
+                        ),
+                      ),
+                      Spacer(),
+                      FloatingActionButton(
+                        onPressed: () {
+                          Navigator.of(context).pop({
+                            'location': LocationResult(
+                              latLng: locationProvider.lastIdleLocation,
+                              address: _address,
+                              placeId: _placeId,
+                            )
+                          });
+                        },
+                        child: widget.resultCardConfirmIcon ??
+                            Icon(Icons.arrow_forward),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+        ),
       ),
     );
   }
 
   Future<Map<String, String>> getAddress(LatLng location) async {
-    try {
-      final endpoint =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location?.latitude},${location?.longitude}'
-          '&key=${widget.apiKey}&language=${widget.language}';
-
-      final response = jsonDecode((await http.get(Uri.parse(endpoint),
-              headers: await LocationUtils.getAppHeaders()))
-          .body);
-
-      return {
-        "placeId": response['results'][0]['place_id'],
-        "address": response['results'][0]['formatted_address']
-      };
-    } catch (e) {
-      print(e);
-    }
-
-    return {"placeId": null, "address": null};
+    // try {
+    //   final endpoint =
+    //       'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location?.latitude},${location?.longitude}'
+    //       '&key=${widget.apiKey}&language=${widget.language}';
+    //
+    //   final response = jsonDecode((await http.get(Uri.parse(endpoint),
+    //           headers: await LocationUtils.getAppHeaders()))
+    //       .body);
+    //
+    //   return {
+    //     "placeId": response['results'][0]['place_id'],
+    //     "address": response['results'][0]['formatted_address']
+    //   };
+    // } catch (e) {
+    //   print(e);
+    // }
+    final coordinates = new Coordinates(location?.latitude, location?.longitude);
+    var addresses = await Geocoder.local.findAddressesFromCoordinates(coordinates);
+    return {"placeId": null, "address": addresses?.first?.addressLine ?? null};
   }
 
   Widget pin() {
